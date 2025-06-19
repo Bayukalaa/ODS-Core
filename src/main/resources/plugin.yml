@@ -1,0 +1,8 @@
+name: ODSCore
+version: '0.1.2'
+main: dev.onlydarknesss.ODSCore.Main
+api-version: '1.20'
+prefix: ODS-Core
+authors: [ OnlyDarknesss ]
+description: Developed by OnlyDarknesss
+website: https://onlydarknesss.dev
