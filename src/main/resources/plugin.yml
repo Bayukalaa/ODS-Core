@@ -9,7 +9,7 @@ website: https://onlydarknesss.dev
 commands:
   wl:
     description: Adds a player to the maintenance whitelist
-    usage: /wl <add/remove/list> <playerName>
+    usage: /wl <add/remove/list/clear> [player]
     permission: odscore.whitelist
 permissions:
   odscore.whitelist:

@@ -17,26 +17,71 @@ public class WhiteListManager implements CommandExecutor {
             return true;
         }
 
-        if (args.length != 2 || !args[0].equalsIgnoreCase("add")) {
-            sender.sendMessage(Main.PREFIX + " §eUsage: /wl add <playerName>");
+        if (args.length < 1) {
+            sender.sendMessage(Main.PREFIX + " §eUsage: /wl <add/remove/list/clear> [playerName]");
             return true;
         }
 
-        String playerName = args[1];
+        String subCommand = args[0].toLowerCase();
         Main plugin = Main.getInstance();
-
         List<String> whitelist = plugin.getConfig().getStringList("system.white-list");
 
-        if (whitelist.contains(playerName)) {
-            sender.sendMessage(Main.PREFIX + " §e" + playerName + " is already on the whitelist.");
-            return true;
+        switch (subCommand) {
+            case "add" -> {
+                if (args.length != 2) {
+                    sender.sendMessage(Main.PREFIX + " §eUsage: /wl add <playerName>");
+                    return true;
+                }
+                String playerToAdd = args[1];
+                if (whitelist.contains(playerToAdd)) {
+                    sender.sendMessage(Main.PREFIX + " §e" + playerToAdd + " is already on the whitelist.");
+                    return true;
+                }
+                whitelist.add(playerToAdd);
+                plugin.getConfig().set("system.white-list", whitelist);
+                plugin.saveConfig();
+                sender.sendMessage(Main.PREFIX + " §a" + playerToAdd + " has been added to the whitelist.");
+            }
+
+            case "remove" -> {
+                if (args.length != 2) {
+                    sender.sendMessage(Main.PREFIX + " §eUsage: /wl remove <playerName>");
+                    return true;
+                }
+                String playerToRemove = args[1];
+                if (!whitelist.contains(playerToRemove)) {
+                    sender.sendMessage(Main.PREFIX + " §e" + playerToRemove + " is not in the whitelist.");
+                    return true;
+                }
+                whitelist.remove(playerToRemove);
+                plugin.getConfig().set("system.white-list", whitelist);
+                plugin.saveConfig();
+                sender.sendMessage(Main.PREFIX + " §c" + playerToRemove + " has been removed from the whitelist.");
+            }
+
+            case "list" -> {
+                if (whitelist.isEmpty()) {
+                    sender.sendMessage(Main.PREFIX + " §eWhitelist is currently empty.");
+                } else {
+                    sender.sendMessage(Main.PREFIX + " §aWhitelisted players:");
+                    for (String name : whitelist) {
+                        sender.sendMessage(" §f- " + name);
+                    }
+                }
+            }
+
+            case "clear" -> {
+                whitelist.clear();
+                plugin.getConfig().set("system.white-list", whitelist);
+                plugin.saveConfig();
+                sender.sendMessage(Main.PREFIX + " §cWhitelist has been cleared.");
+            }
+
+            default -> {
+                sender.sendMessage(Main.PREFIX + " §eUnknown subcommand. Usage: /wl <add/remove/list/clear> [playerName]");
+            }
         }
 
-        whitelist.add(playerName);
-        plugin.getConfig().set("system.white-list", whitelist);
-        plugin.saveConfig();
-
-        sender.sendMessage(Main.PREFIX + " §a" + playerName + " has been added to the whitelist.");
         return true;
     }
 }
