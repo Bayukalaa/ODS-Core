@@ -6,3 +6,11 @@ prefix: ODS-Core
 authors: [ OnlyDarknesss ]
 description: Developed by OnlyDarknesss
 website: https://onlydarknesss.dev
+commands:
+  wl:
+    description: Adds a player to the maintenance whitelist
+    usage: /wl <add/remove/list> <playerName>
+    permission: odscore.whitelist
+permissions:
+  odscore.whitelist:
+    default: op

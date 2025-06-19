@@ -1,6 +1,10 @@
 package dev.onlydarknesss.ODSCore;
 
+import dev.onlydarknesss.ODSCore.Utils.WhiteListManager;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
@@ -8,11 +12,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public final class Main extends JavaPlugin {
+public final class Main extends JavaPlugin implements Listener {
 
     private static Main instance;
-    private static boolean DEV_MODE = false;
-    private static String VERSION = "pre-alpha";
+    public static boolean DEV_MODE;
+    public static String VERSION;
+    public static String PREFIX;
 
     private List<File> filesToCopy;
 
@@ -24,7 +29,10 @@ public final class Main extends JavaPlugin {
         FileConfiguration config = getConfig();
         DEV_MODE = config.getBoolean("dev-mode", false);
         VERSION = config.getString("pre-alpha", "pre-alpha");
+        PREFIX = config.getString("system.prefix", "[ODS-Core]");
 
+        getCommand("wl").setExecutor(new WhiteListManager());
+        getServer().getPluginManager().registerEvents(this, this);
         filesToCopy = List.of(
                 new File(getDataFolder(), "config.yml")
         );
@@ -36,7 +44,7 @@ public final class Main extends JavaPlugin {
     }
 
     private void maintenance(boolean devMode) {
-        File logFolder = new File(getDataFolder(), "Logs");
+        File logFolder = new File(getDataFolder(), "backups");
 
         String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss").format(new Date());
         if (!logFolder.exists()) {
@@ -80,5 +88,22 @@ public final class Main extends JavaPlugin {
 
     public static Main getInstance() {
         return instance;
+    }
+
+    @EventHandler
+    public void onPlayerLogin(PlayerLoginEvent event) {
+        Main plugin = Main.getInstance();
+
+        boolean devMode = plugin.getConfig().getBoolean("dev-mode", false);
+        List<String> whitelist = plugin.getConfig().getStringList("system.white-list");
+
+        if (devMode) {
+            String playerName = event.getPlayer().getName();
+
+            if (!whitelist.contains(playerName)) {
+                event.disallow(PlayerLoginEvent.Result.KICK_OTHER,
+                        "Server is currently under maintenance.\nYou are not whitelisted.");
+            }
+        }
     }
 }

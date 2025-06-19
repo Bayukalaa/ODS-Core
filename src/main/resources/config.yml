@@ -1,2 +1,6 @@
 dev-mode: true
 version: pre-alpha
+
+system:
+  prefix: [ODS-Core]
+  white-list: []
