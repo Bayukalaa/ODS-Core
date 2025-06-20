@@ -11,6 +11,29 @@ commands:
     description: Adds a player to the maintenance whitelist
     usage: /wl <add/remove/list/clear> [player]
     permission: odscore.whitelist
+
+  ods:
+    description: Main command for ODS system management
+    usage: /ods <help|admin|settings|maintenance>
+    permission: ods.default
+    aliases: [ odscore ]
+
 permissions:
-  odscore.whitelist:
-    default: op
+  ods.default:
+    description: Base permission to use /ods command
+    default: true
+
+    ods.admin:
+      description: Allows access to /ods admin and /ods maintenance
+      default: op
+
+    ods.settings:
+      description: Allows access to /ods settings
+      default: op
+
+    ods.bypass:
+      description: Bypass permission for all ODS commands
+      default: op
+
+    odscore.whitelist:
+      default: op

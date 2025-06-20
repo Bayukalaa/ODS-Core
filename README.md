@@ -10,9 +10,9 @@
 ### **How does the maintenance system work?**
 > It has a system similar to the whitelist system found in paper/spigot software [for now, GUI style additions may be made in _future updates_] The usage method is very simple, you can add or remove players to the list, view the list, and clear the list by typing
 
-| COMMAND             | usage                           |
-|---------------------|---------------------------------|
-| /wl add username    | adds user to white-list         | 
-| /wl remove username | removes user to white-list      |
-| /wl list            | shows the white-list list       |
-| /wl clear           | deletes everyone from the list  | 
+| COMMAND             | usage                          |
+|---------------------|--------------------------------|
+| /wl add username    | adds user to white-list        | 
+| /wl remove username | removes user from white-list   |
+| /wl list            | shows the white-list list      |
+| /wl clear           | deletes everyone from the list | 

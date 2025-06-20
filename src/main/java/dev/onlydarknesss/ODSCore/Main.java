@@ -1,7 +1,9 @@
 package dev.onlydarknesss.ODSCore;
 
+import dev.onlydarknesss.ODSCore.Commands.ODSManager;
 import dev.onlydarknesss.ODSCore.Utils.WhiteListManager;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
@@ -32,6 +34,7 @@ public final class Main extends JavaPlugin implements Listener {
         PREFIX = config.getString("system.prefix", "[ODS-Core]");
 
         getCommand("wl").setExecutor(new WhiteListManager());
+        getCommand("ods").setExecutor(new ODSManager());
         getServer().getPluginManager().registerEvents(this, this);
         filesToCopy = List.of(
                 new File(getDataFolder(), "config.yml")
@@ -41,6 +44,20 @@ public final class Main extends JavaPlugin implements Listener {
             getLogger().info("Server is on maintenance, if you think there was an error, check config file or contact the developer.");
             maintenance(true);
         }
+    }
+
+    public static String getMaintenanceStatus() {
+        return getInstance().getConfig().getBoolean("dev-mode") ? "on" : "off";
+    }
+
+
+    public static void setMaintenanceStatus(String devMode){
+        if (devMode.equalsIgnoreCase("on")){
+            getInstance().getConfig().set("dev-mode", true);
+        } else {
+            getInstance().getConfig().set("dev-mode", false);
+        }
+        getInstance().saveConfig();
     }
 
     private void maintenance(boolean devMode) {
