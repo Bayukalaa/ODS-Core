@@ -2,6 +2,7 @@ package dev.onlydarknesss.ODSCore;
 
 import dev.onlydarknesss.ODSCore.Commands.ODSManager;
 import dev.onlydarknesss.ODSCore.Utils.WhiteListManager;
+import dev.onlydarknesss.ODSCore.WebDashboard.WebServer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -33,6 +34,8 @@ public final class Main extends JavaPlugin implements Listener {
         VERSION = config.getString("pre-alpha", "pre-alpha");
         PREFIX = config.getString("system.prefix", "[ODS-Core]");
 
+        WebServer.start(this);
+
         getCommand("wl").setExecutor(new WhiteListManager());
         getCommand("ods").setExecutor(new ODSManager());
         getServer().getPluginManager().registerEvents(this, this);
@@ -50,15 +53,22 @@ public final class Main extends JavaPlugin implements Listener {
         return getInstance().getConfig().getBoolean("dev-mode") ? "on" : "off";
     }
 
-
-    public static void setMaintenanceStatus(String devMode){
-        if (devMode.equalsIgnoreCase("on")){
-            getInstance().getConfig().set("dev-mode", true);
-        } else {
-            getInstance().getConfig().set("dev-mode", false);
-        }
-        getInstance().saveConfig();
+    public static String getVERSION(){
+        return VERSION;
     }
+
+    public static String getPREFIX(){
+        return PREFIX;
+    }
+
+    public static void setMaintenanceStatus(String devMode) {
+        Main instance = getInstance();
+        boolean value = devMode.equalsIgnoreCase("on");
+        instance.getConfig().set("dev-mode", value);
+        instance.saveConfig();
+        instance.reloadConfig();
+    }
+
 
     private void maintenance(boolean devMode) {
         File logFolder = new File(getDataFolder(), "backups");
