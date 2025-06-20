@@ -25,12 +25,22 @@
     </style>
 </head>
 <body>
+
+<!-- Navbar -->
 <nav class="navbar navbar-dark bg-dark mb-3">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">ODS-Core Dashboard</a>
+        <div class="d-flex gap-2">
+            <button id="loginBtn" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#loginModal">
+                Login
+            </button>
+            <button id="settingsBtn" class="btn btn-outline-light d-none">Server Settings</button>
+            <button id="logoutBtn" class="btn btn-outline-danger d-none">Logout</button>
+        </div>
     </div>
 </nav>
 
+<!-- Dashboard Layout -->
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar: Player List -->
@@ -105,6 +115,34 @@
     </div>
 </div>
 
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="loginForm">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-dark text-white">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" required class="form-control" id="username" />
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" required class="form-control" id="password" />
+                </div>
+                <div id="loginError" class="text-danger d-none">Invalid username or password.</div>
+            </div>
+            <div class="modal-footer bg-dark">
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

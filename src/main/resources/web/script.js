@@ -1,6 +1,34 @@
+function isLoggedIn() {
+  return !!sessionStorage.getItem('odsToken');
+}
+
+function getAuthHeaders() {
+  const token = sessionStorage.getItem('odsToken');
+  return token ? { 'Authorization': 'Bearer ' + token } : {};
+}
+
+function updateNavbar() {
+  const loginBtn = document.getElementById('loginBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  if (isLoggedIn()) {
+    loginBtn.classList.add('d-none');
+    settingsBtn.classList.remove('d-none');
+    logoutBtn.classList.remove('d-none');
+  } else {
+    loginBtn.classList.remove('d-none');
+    settingsBtn.classList.add('d-none');
+    logoutBtn.classList.add('d-none');
+  }
+}
+
 function updateServerInfo() {
-  fetch('/api/info')
-    .then(res => res.json())
+  fetch('/api/info', { headers: getAuthHeaders() })
+    .then(res => {
+      if (res.status === 401 || res.status === 403) throw new Error('Unauthorized');
+      return res.json();
+    })
     .then(data => {
       document.getElementById('players-count').textContent = data.players;
       document.getElementById('version').textContent = data.version;
@@ -35,8 +63,11 @@ function updateServerInfo() {
 }
 
 function updateChatLog() {
-  fetch('/api/chat')
-    .then(res => res.json())
+  fetch('/api/chat', { headers: getAuthHeaders() })
+    .then(res => {
+      if (res.status === 401 || res.status === 403) throw new Error('Unauthorized');
+      return res.json();
+    })
     .then(messages => {
       const chatLog = document.getElementById('chat-log');
       chatLog.textContent = '';
@@ -54,15 +85,53 @@ function updateChatLog() {
     });
 }
 
-window.addEventListener('load', () => {
+document.getElementById('loginForm').addEventListener('submit', function (e) {
+  e.preventDefault();
 
-    updateServerInfo();
-    updateChatLog();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
 
-    setInterval(updateServerInfo, 10000)
-    setInterval(updateChatLog, 1000);
+  fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        sessionStorage.setItem('odsToken', data.token);
+        sessionStorage.setItem('odsUsername', username);
+        updateNavbar();
+        const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+        loginModal.hide();
+        document.getElementById('loginError').classList.add('d-none');
+      } else {
+        document.getElementById('loginError').classList.remove('d-none');
+      }
+    })
+    .catch(err => {
+      console.error('Login failed:', err);
+      document.getElementById('loginError').classList.remove('d-none');
+    });
 });
 
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  const token = sessionStorage.getItem('odsToken');
+  fetch('/api/logout', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).finally(() => {
+    sessionStorage.removeItem('odsToken');
+    sessionStorage.removeItem('odsUsername');
+    updateNavbar();
+    alert('Logged out.');
+  });
+});
 
-
-
+window.addEventListener('load', () => {
+  updateNavbar();
+  updateServerInfo();
+  updateChatLog();
+  setInterval(updateServerInfo, 10000);
+  setInterval(updateChatLog, 1000);
+});

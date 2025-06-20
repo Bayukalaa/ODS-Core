@@ -4,3 +4,11 @@ version: pre-alpha
 system:
   prefix: [ODS-Core]
   white-list: []
+
+database:
+  host: localhost
+  port: 3306
+  database: odscore
+  username: odscore
+  password: 2201Bnnc??
+  useSSL: false

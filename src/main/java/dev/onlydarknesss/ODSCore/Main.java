@@ -1,17 +1,19 @@
 package dev.onlydarknesss.ODSCore;
 
 import dev.onlydarknesss.ODSCore.Commands.ODSManager;
+import dev.onlydarknesss.ODSCore.Database.Database;
 import dev.onlydarknesss.ODSCore.Utils.ChatListener;
+import dev.onlydarknesss.ODSCore.Utils.PasswordUtils;
 import dev.onlydarknesss.ODSCore.Utils.WhiteListManager;
 import dev.onlydarknesss.ODSCore.WebDashboard.WebServer;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -23,19 +25,47 @@ public final class Main extends JavaPlugin implements Listener {
     public static String VERSION;
     public static String PREFIX;
 
+    public static String HOST;
+    public static int PORT;
+    public static String DB;
+    public static String USERNAME;
+    public static String PASS;
+    public static Boolean USE_SSL;
+
     private List<File> filesToCopy;
+
+    private Database database;
 
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
-
+        database = new Database(this);
         FileConfiguration config = getConfig();
+
+        PasswordUtils.setLogger(this.getLogger());
         DEV_MODE = config.getBoolean("dev-mode", false);
-        VERSION = config.getString("pre-alpha", "pre-alpha");
-        PREFIX = config.getString("system.prefix", "[ODS-Core]");
+        VERSION = getVERSION();
+        PREFIX = getPREFIX();
+        HOST = getHost();
+        PORT = getPort();
+        DB = getDatabase();
+        USERNAME = getUsername();
+        PASS = getPassword();
+        USE_SSL = getSSL();
 
         WebServer webServer = new WebServer(this);
+
+       try {
+           if (!database.isConnected()){
+               database.connect();
+               getLogger().info("Database connection was successful");
+               database.createUserTable();
+           }
+       } catch (SQLException e) {
+           throw new RuntimeException(e);
+       }
+
         webServer.start();
 
         getCommand("wl").setExecutor(new WhiteListManager());
@@ -58,11 +88,13 @@ public final class Main extends JavaPlugin implements Listener {
     }
 
     public static String getVERSION(){
-        return VERSION;
+
+        return getInstance().getConfig().getString("version", "pre-alpha");
     }
 
     public static String getPREFIX(){
-        return PREFIX;
+
+        return getInstance().getConfig().getString("system.prefix", "[ODS-Core]");
     }
 
     public static void setMaintenanceStatus(String devMode) {
@@ -73,6 +105,29 @@ public final class Main extends JavaPlugin implements Listener {
         instance.reloadConfig();
     }
 
+    public static String getHost(){
+        return getInstance().getConfig().getString("database.host", "localhost");
+    }
+
+    public static int getPort(){
+        return getInstance().getConfig().getInt("database.port", 3306);
+    }
+
+    public static String getDatabase(){
+        return getInstance().getConfig().getString("database.database", "odscore");
+    }
+
+    public static String getUsername(){
+        return getInstance().getConfig().getString("database.username", "odscore");
+    }
+
+    public static String getPassword(){
+        return getInstance().getConfig().getString("database.password", "2201Bnnc??");
+    }
+
+    public static Boolean getSSL(){
+        return getInstance().getConfig().getBoolean("database.useSSL", false);
+    }
 
     private void maintenance(boolean devMode) {
         File logFolder = new File(getDataFolder(), "backups");
