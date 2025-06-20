@@ -1,6 +1,7 @@
 package dev.onlydarknesss.ODSCore;
 
 import dev.onlydarknesss.ODSCore.Commands.ODSManager;
+import dev.onlydarknesss.ODSCore.Utils.ChatListener;
 import dev.onlydarknesss.ODSCore.Utils.WhiteListManager;
 import dev.onlydarknesss.ODSCore.WebDashboard.WebServer;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -34,11 +35,14 @@ public final class Main extends JavaPlugin implements Listener {
         VERSION = config.getString("pre-alpha", "pre-alpha");
         PREFIX = config.getString("system.prefix", "[ODS-Core]");
 
-        WebServer.start(this);
+        WebServer webServer = new WebServer(this);
+        webServer.start();
 
         getCommand("wl").setExecutor(new WhiteListManager());
         getCommand("ods").setExecutor(new ODSManager());
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new ChatListener(), this);
+
         filesToCopy = List.of(
                 new File(getDataFolder(), "config.yml")
         );

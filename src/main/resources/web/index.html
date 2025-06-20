@@ -2,70 +2,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>ODSCore Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Bootstrap 5 CSS -->
-    <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css" />
+    <title>ODS-Core Server Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+          background-color: #121212;
+          color: white;
+        }
+        #sidebar {
+          height: 100vh;
+          overflow-y: auto;
+          background-color: #212529;
+        }
+        #chat-log {
+          font-family: monospace;
+          font-size: 0.9rem;
+          white-space: pre-wrap;
+          overflow-y: auto;
+          max-height: 300px;
+        }
+    </style>
 </head>
-<body class="bg-dark text-white">
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<body>
+<nav class="navbar navbar-dark bg-dark mb-3">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">ODSCore Dashboard</a>
+        <a class="navbar-brand" href="#">ODS-Core Dashboard</a>
     </div>
 </nav>
 
-<header class="container py-4 text-center">
-    <h1 class="display-5">Minecraft Server Monitor</h1>
-    <p class="lead">Live server stats and maintenance information</p>
-</header>
-
-<main class="container">
+<div class="container-fluid">
     <div class="row">
         <!-- Sidebar: Player List -->
-        <aside class="col-md-4 mb-4">
-            <div class="card bg-secondary text-white h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">Online Players</h5>
-                </div>
-                <ul id="player-list" class="list-group list-group-flush bg-secondary" style="max-height: 400px; overflow-y: auto;">
-                    <li class="list-group-item bg-secondary text-white">Loading...</li>
-                </ul>
-            </div>
+        <aside class="col-md-4 col-lg-3" id="sidebar">
+            <h5 class="mt-3">Online Players</h5>
+            <ul class="list-group list-group-flush" id="player-list">
+                <li class="list-group-item bg-secondary text-white">Loading players...</li>
+            </ul>
         </aside>
 
-        <!-- Main Content: Server Info -->
-        <section class="col-md-8 mb-4">
-            <div class="card bg-secondary text-white h-100">
-                <div class="card-header">
-                    <h4>Server Info</h4>
+        <!-- Main Content -->
+        <main class="col-md-8 col-lg-9">
+            <div class="d-flex gap-3 mb-3">
+                <!-- Server Info Card -->
+                <div class="card bg-secondary text-white flex-grow-1">
+                    <div class="card-header">
+                        <h4>Server Info</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush bg-secondary">
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>Online Players:</strong> <span id="players-count">Loading...</span>
+                            </li>
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>Server Version:</strong> <span id="version">Loading...</span>
+                            </li>
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>MOTD:</strong> <span id="motd">Loading...</span>
+                            </li>
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>Maintenance Mode:</strong> <span id="devmode">Loading...</span>
+                            </li>
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>API Version:</strong> <span id="api-version">Loading...</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush bg-secondary">
-                        <li class="list-group-item bg-secondary text-white"><strong>Online Players:</strong> <span id="players-count">Loading...</span></li>
-                        <li class="list-group-item bg-secondary text-white"><strong>Server Version:</strong> <span id="version">Loading...</span></li>
-                        <li class="list-group-item bg-secondary text-white"><strong>Api Version:</strong> <span id="api">Loading...</span></li>
-                        <li class="list-group-item bg-secondary text-white"><strong>MOTD:</strong> <span id="motd">Loading...</span></li>
-                        <li class="list-group-item bg-secondary text-white"><strong>Maintenance Mode:</strong> <span id="devmode">Loading...</span></li>
-                    </ul>
+
+                <!-- Performance Info Card -->
+                <div class="card bg-secondary text-white flex-grow-1">
+                    <div class="card-header">
+                        <h4>Performance Info</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush bg-secondary">
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>Ping:</strong> <span id="server-ping">Loading...</span> ms
+                            </li>
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>TPS:</strong> <span id="server-tps">Loading...</span>
+                            </li>
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>CPU Usage:</strong> <span id="cpu-usage">Loading...</span> %
+                            </li>
+                            <li class="list-group-item bg-secondary text-white">
+                                <strong>Memory Usage:</strong> <span id="memory-usage">Loading...</span> MB
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </section>
-    </div>
-</main>
 
-<footer class="footer mt-auto py-3 bg-dark text-center">
-    <div class="container">
-        <span class="text-muted">ODSCore &copy; 2025 | Minecraft Server Panel</span>
+            <!-- Chat Log -->
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h5 class="mb-0">Chat Log</h5>
+                </div>
+                <div id="chat-log" class="p-3">Loading chat...</div>
+            </div>
+        </main>
     </div>
-</footer>
-
-<!-- Bootstrap 5 JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
 
 <script src="script.js"></script>
 </body>

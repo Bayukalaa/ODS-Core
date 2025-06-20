@@ -1,9 +1,13 @@
 package dev.onlydarknesss.ODSCore.WebDashboard;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import dev.onlydarknesss.ODSCore.Main;
+import dev.onlydarknesss.ODSCore.Utils.ChatApiHandler;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -11,12 +15,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class WebServer {
-    public static void start(Main plugin) {
+    private final Main plugin;
+
+    public WebServer(Main plugin) {
+        this.plugin = plugin;
+    }
+
+    public void start() {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
             server.createContext("/", new StaticFileHandler());
             server.createContext("/api/info", new InfoApiHandler(plugin));
-            server.setExecutor(null); // default executor
+            server.createContext("/api/chat", new ChatApiHandler());
+
+            server.setExecutor(null);
             server.start();
             plugin.getLogger().info("Web dashboard started on http://localhost:8080");
         } catch (IOException e) {
@@ -69,6 +81,7 @@ public class WebServer {
 
     static class InfoApiHandler implements HttpHandler {
         private final Main plugin;
+        private final Gson gson = new Gson();
 
         public InfoApiHandler(Main plugin) {
             this.plugin = plugin;
@@ -82,15 +95,38 @@ public class WebServer {
             String apiV = Main.getVERSION();
             boolean devmode = plugin.getConfig().getBoolean("dev-mode");
 
-            List<String> playerNames = plugin.getServer().getOnlinePlayers().stream()
-                    .map(player -> player.getName())
-                    .toList();
+            double[] tpsArr = plugin.getServer().getTPS();
+            double tps = tpsArr.length > 0 ? tpsArr[0] : -1;
 
-            String json = String.format(
-                    "{\"players\":%d,\"version\":\"%s\",\"motd\":\"%s\",\"devmode\":%b,\"playerNames\":%s,\"apiVersion\":\"%s\"}",
-                    players, escapeJson(version), escapeJson(motd), devmode, toJsonArray(playerNames), escapeJson(apiV)
-            );
 
+            int pingSum = 0;
+            int count = 0;
+            for (var player : plugin.getServer().getOnlinePlayers()) {
+                pingSum += player.getPing();
+                count++;
+            }
+            int avgPing = count > 0 ? pingSum / count : -1;
+
+            double cpuUsage = getCpuUsagePercent();
+            long memoryUsage = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+
+            JsonArray playerArray = new JsonArray();
+            for (String p : plugin.getServer().getOnlinePlayers().stream().map(player -> player.getName()).toList()) {
+                playerArray.add(p);
+            }
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("players", players);
+            jsonObject.addProperty("version", version);
+            jsonObject.addProperty("motd", motd);
+            jsonObject.addProperty("devmode", devmode);
+            jsonObject.add("playerNames", playerArray);
+            jsonObject.addProperty("apiVersion", apiV);
+            jsonObject.addProperty("ping", avgPing);
+            jsonObject.addProperty("tps", tps);
+            jsonObject.addProperty("cpuUsage", cpuUsage);
+            jsonObject.addProperty("memoryUsage", memoryUsage);
+
+            String json = gson.toJson(jsonObject);
 
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             byte[] responseBytes = json.getBytes(StandardCharsets.UTF_8);
@@ -100,27 +136,14 @@ public class WebServer {
             }
         }
 
-
-        private String toJsonArray(List<String> list) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("[");
-            for (int i = 0; i < list.size(); i++) {
-                sb.append("\"").append(escapeJson(list.get(i))).append("\"");
-                if (i < list.size() - 1) sb.append(",");
+        private double getCpuUsagePercent() {
+            try {
+                com.sun.management.OperatingSystemMXBean osBean =
+                        (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+                return osBean.getProcessCpuLoad() * 100;
+            } catch (Exception e) {
+                return -1;
             }
-            sb.append("]");
-            return sb.toString();
-        }
-
-        private String escapeJson(String input) {
-            if (input == null) return "";
-            return input.replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\b", "\\b")
-                    .replace("\f", "\\f")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r")
-                    .replace("\t", "\\t");
         }
     }
 }
