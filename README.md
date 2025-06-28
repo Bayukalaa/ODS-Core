@@ -1,3 +1,17 @@
+# 28-06-2025
+
+## Pre-ALPHA Version Changes
+
+- Added Login system for **Web Server API** [BETA]
+- Added "players" & "player_permissions" tables on database
+- Added **Permission Handling System** on Web Server API [BETA]
+- Added **Update Player Permissions & Information System** on Web Server API [BETA]
+
+### **How does the Permission Handling System work?**
+>When a player logs in to the server, the permissions that the player has in the database table and the permissions in the table are checked and sent to the web server API. </br>
+</br>When the active player is clicked in the Players section, the username & email address & role & money and permissions are shown. </br></br>
+In the Permissions section, the permission is removed from the cross mark in the upper right corner of the permissions that the player has, and the permission can be added with the "add" button to the right of the title.
+
 # 20-06-2025
 
 ## Pre-ALPHA Version Changes
