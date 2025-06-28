@@ -7,10 +7,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import dev.onlydarknesss.ODSCore.Main;
-import dev.onlydarknesss.ODSCore.Utils.ChatApiHandler;
-import dev.onlydarknesss.ODSCore.Utils.LoginUtils;
-import dev.onlydarknesss.ODSCore.Utils.LogoutHandler;
-import dev.onlydarknesss.ODSCore.Utils.SecureEndpoint;
+import dev.onlydarknesss.ODSCore.Utils.*;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -31,7 +28,7 @@ public class WebServer {
 
             plugin.getLogger().info("[WebServer] Creating contexts...");
 
-            server.createContext("/", new StaticFileHandler());
+            server.createContext("/", new StaticFileHandler(plugin));
             plugin.getLogger().info("[WebServer] Context '/' created");
 
             server.createContext("/api/info", new InfoApiHandler(plugin));
@@ -49,6 +46,14 @@ public class WebServer {
             server.createContext("/api/secure-example", new SecureEndpoint());
             plugin.getLogger().info("[WebServer] Context '/api/secure-example' created");
 
+            server.createContext("/api/player/details", new PlayerDetailsHandler(plugin));
+            plugin.getLogger().info("[WebServer] Context '/api/player/details' created");
+
+            server.createContext("/api/player/perm", new PermissionHandler(plugin));
+            plugin.getLogger().info("[WebServer] Context '/api/player/perm' created");
+
+
+
             server.setExecutor(null);
 
             server.start();
@@ -60,18 +65,25 @@ public class WebServer {
         }
     }
 
-    static class StaticFileHandler implements HttpHandler {
+    // StaticFileHandler artık non-static ve plugin referansını alıyor
+    public static class StaticFileHandler implements HttpHandler {
+        private final Main plugin;
+
+        public StaticFileHandler(Main plugin) {
+            this.plugin = plugin;
+        }
+
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
-            //System.out.println("[StaticFileHandler] Requested path: " + path);
+            plugin.getLogger().info("[StaticFileHandler] Requested path: " + path);
 
             if (path.equals("/")) path = "/index.html";
 
             InputStream in = WebServer.class.getResourceAsStream("/web" + path);
             if (in == null) {
                 String notFound = "404 Not Found";
-               // System.out.println("[StaticFileHandler] File not found: " + path);
+                plugin.getLogger().warning("[StaticFileHandler] File not found: " + path);
                 exchange.sendResponseHeaders(404, notFound.getBytes(StandardCharsets.UTF_8).length);
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(notFound.getBytes(StandardCharsets.UTF_8));
@@ -80,6 +92,7 @@ public class WebServer {
             }
 
             byte[] data = in.readAllBytes();
+            plugin.getLogger().info("[StaticFileHandler] Serving file: " + path + ", size: " + data.length);
 
             String contentType;
             if (path.endsWith(".css")) {
@@ -103,12 +116,11 @@ public class WebServer {
 
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(data);
-               // System.out.println("[StaticFileHandler] Served file: " + path);
             }
         }
     }
 
-    static class InfoApiHandler implements HttpHandler {
+    public static class InfoApiHandler implements HttpHandler {
         private final Main plugin;
         private final Gson gson = new Gson();
 
@@ -118,8 +130,6 @@ public class WebServer {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-           // System.out.println("[InfoApiHandler] Request received");
-
             int players = plugin.getServer().getOnlinePlayers().size();
             String version = plugin.getServer().getVersion();
             String motd = plugin.getServer().getMotd();
@@ -164,7 +174,6 @@ public class WebServer {
             exchange.sendResponseHeaders(200, responseBytes.length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(responseBytes);
-              //  System.out.println("[InfoApiHandler] Response sent");
             }
         }
 
@@ -174,7 +183,7 @@ public class WebServer {
                         (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
                 return osBean.getProcessCpuLoad() * 100;
             } catch (Exception e) {
-                System.err.println("[InfoApiHandler] CPU usage error: " + e.getMessage());
+                plugin.getLogger().warning("[InfoApiHandler] CPU usage error: " + e.getMessage());
                 return -1;
             }
         }

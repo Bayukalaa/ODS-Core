@@ -1,0 +1,12 @@
+######################################################################
+############################## MESSAGES ##############################
+######################################################################
+### placeholder can only be used in places where '{}' is defined
+welcome-message: "&Hoş geldin, {player}!"
+
+
+######################################################################
+########################### ERROR MESSAGES ###########################
+######################################################################
+no-permission: "&cBu komutu kullanmak için gereken yetkiye sahip değilsin!"
+player-only: "&cBu komut sadece oyun içerisinden kullanılabilir!"

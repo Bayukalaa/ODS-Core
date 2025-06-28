@@ -44,6 +44,14 @@ public class ODSManager implements CommandExecutor {
                 }
             }
 
+            case "lang" -> {
+                if (sender.hasPermission("ods.lang") || sender.hasPermission("ods.bypass")){
+                    sender.sendMessage(Main.PREFIX + " §eSOON");
+                } else {
+                    sender.sendMessage(Main.PREFIX + " §cYou don't have permission to use this command.");
+                }
+            }
+
             case "maintenance" -> {
                 if (sender.hasPermission("ods.admin") || sender.hasPermission("ods.bypass")) {
                     if (args.length > 1) {

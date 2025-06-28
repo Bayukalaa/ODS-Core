@@ -4,6 +4,7 @@ version: pre-alpha
 system:
   prefix: [ODS-Core]
   white-list: []
+  lang: en_US
 
 database:
   host: localhost

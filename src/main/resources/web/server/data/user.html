@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ODS-Core Player Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+        }
+        #sidebar {
+            background-color: #212529;
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            top: 56px;
+            left: 0;
+            overflow-y: auto;
+            padding-top: 1rem;
+        }
+        #content {
+            margin-left: 250px;
+            padding: 1.5rem;
+            margin-top: 56px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        a.sidebar-link {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 1rem;
+        }
+        a.sidebar-link:hover, a.sidebar-link.active {
+            background-color: #343a40;
+            color: #0d6efd;
+        }
+        .navbar-dark {
+            background-color: #212529;
+        }
+        .player-card:hover {
+            cursor: pointer;
+            background-color: #2a2a2a;
+        }
+        /* Permission badge stil */
+        #modal-permissions span.badge {
+            position: relative;
+            padding-right: 1.5rem;
+            cursor: default;
+        }
+        #modal-permissions span.badge .remove-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            transform: translate(50%, -50%);
+            cursor: pointer;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-weight: bold;
+            line-height: 18px;
+            text-align: center;
+            user-select: none;
+        }
+        /* + Add button */
+        .perm-add-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark fixed-top">
+    <div class="container-fluid d-flex justify-content-between">
+        <span class="navbar-brand mb-0 h1">Player Management</span>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Log out</button>
+    </div>
+</nav>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+    <nav class="nav flex-column">
+        <a href="settings.html" class="sidebar-link">Settings Home</a>
+        <a href="players.html" class="sidebar-link active">Players</a>
+        <a href="#" class="sidebar-link">Plugins</a>
+        <a href="#" class="sidebar-link">Logs</a>
+    </nav>
+</aside>
+
+<!-- Main Content -->
+<main id="content">
+    <h2>Online Players</h2>
+    <div id="player-container" class="row g-3"></div>
+</main>
+
+<!-- Player Modal -->
+<div class="modal fade" id="playerModal" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="playerModalLabel">Player Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modal-uuid" />
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" id="modal-username" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="modal-email" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Permission Level</label>
+                    <input type="text" class="form-control" id="modal-permlevel" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Balance</label>
+                    <input type="text" class="form-control" id="modal-balance" readonly />
+                </div>
+
+                <!-- Permissions başlığı ve + butonu -->
+                <div class="perm-add-container">
+                    <label class="form-label mb-0">Permissions</label>
+                    <button class="btn btn-sm btn-success" onclick="promptAddPermission()">+ Add</button>
+                </div>
+
+                <div id="modal-permissions" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+        window.location.href = "../index.html";
+    });
+
+    async function loadPlayers() {
+        const res = await fetch("/api/info");
+        const data = await res.json();
+        const container = document.getElementById("player-container");
+        container.innerHTML = "";
+
+        data.playerNames.forEach(name => {
+            const col = document.createElement("div");
+            col.className = "col-md-4";
+
+            const card = document.createElement("div");
+            card.className = "card bg-secondary text-white player-card p-3";
+            card.innerText = name;
+            card.addEventListener("click", () => showPlayerModal(name));
+
+            col.appendChild(card);
+            container.appendChild(col);
+        });
+    }
+
+    async function showPlayerModal(username) {
+        try {
+            const res = await fetch(`/api/player/details?username=${encodeURIComponent(username)}`);
+            if (!res.ok) throw new Error("Failed to load");
+
+            const data = await res.json();
+
+            document.getElementById("modal-username").value = data.username;
+            document.getElementById("modal-email").value = data.email || "";
+            document.getElementById("modal-permlevel").value = data.perm || "default";
+            document.getElementById("modal-balance").value = data.balance || "0";
+            document.getElementById("modal-uuid").value = data.uuid;
+
+            const permContainer = document.getElementById("modal-permissions");
+            permContainer.innerHTML = "";
+
+            data.permissions.forEach(perm => {
+                const badge = document.createElement("span");
+                badge.className = "badge bg-light text-dark";
+                badge.innerHTML = `
+                    <span class="remove-btn" onclick="removePerm('${data.uuid}', '${perm}', this)">×</span>
+                    ${perm}
+                `;
+                permContainer.appendChild(badge);
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById("playerModal"));
+            modal.show();
+        } catch (e) {
+            console.error(e);
+            alert("Failed to load player details.");
+        }
+    }
+
+    async function removePerm(uuid, perm, element) {
+        const res = await fetch(`/api/player/perm?uuid=${uuid}&perm=${encodeURIComponent(perm)}`, {
+            method: "DELETE"
+        });
+        if (res.ok) {
+            element.parentElement.remove();
+        } else {
+            alert("Failed to remove permission.");
+        }
+    }
+
+    async function promptAddPermission() {
+        const perm = prompt("Enter permission to add:");
+        if (!perm) return;
+
+        const uuid = document.getElementById("modal-uuid").value;
+        if (!uuid) {
+            alert("UUID missing");
+            return;
+        }
+
+        const res = await fetch(`/api/player/perm?uuid=${uuid}&perm=${encodeURIComponent(perm)}`, {
+            method: "POST"
+        });
+
+        if (res.ok) {
+            // Yeni permission badge oluştur
+            const permContainer = document.getElementById("modal-permissions");
+            const badge = document.createElement("span");
+            badge.className = "badge bg-light text-dark";
+            badge.innerHTML = `
+                <span class="remove-btn" onclick="removePerm('${uuid}', '${perm}', this)">×</span>
+                ${perm}
+            `;
+            permContainer.appendChild(badge);
+        } else {
+            alert("Failed to add permission.");
+        }
+    }
+
+    loadPlayers();
+</script>
+</body>
+</html>

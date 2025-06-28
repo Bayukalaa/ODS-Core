@@ -2,21 +2,30 @@ package dev.onlydarknesss.ODSCore;
 
 import dev.onlydarknesss.ODSCore.Commands.ODSManager;
 import dev.onlydarknesss.ODSCore.Database.Database;
+import dev.onlydarknesss.ODSCore.Lang.Lang;
 import dev.onlydarknesss.ODSCore.Utils.ChatListener;
 import dev.onlydarknesss.ODSCore.Utils.PasswordUtils;
+import dev.onlydarknesss.ODSCore.Utils.PermissionManager;
 import dev.onlydarknesss.ODSCore.Utils.WhiteListManager;
 import dev.onlydarknesss.ODSCore.WebDashboard.WebServer;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 public final class Main extends JavaPlugin implements Listener {
 
@@ -42,8 +51,11 @@ public final class Main extends JavaPlugin implements Listener {
         saveDefaultConfig();
         database = new Database(this);
         FileConfiguration config = getConfig();
+        PermissionManager.init(this);
 
         PasswordUtils.setLogger(this.getLogger());
+        Lang.init(this);
+        
         DEV_MODE = config.getBoolean("dev-mode", false);
         VERSION = getVERSION();
         PREFIX = getPREFIX();
@@ -177,19 +189,31 @@ public final class Main extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerLogin(PlayerLoginEvent event) {
-        Main plugin = Main.getInstance();
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
 
-        boolean devMode = plugin.getConfig().getBoolean("dev-mode", false);
-        List<String> whitelist = plugin.getConfig().getStringList("system.white-list");
+        PermissionManager.attachPlayer(player);
 
-        if (devMode) {
-            String playerName = event.getPlayer().getName();
+        try (Connection con = database.getCon();
+             PreparedStatement stmt = con.prepareStatement("SELECT permission FROM player_permissions WHERE player_uuid = ?")) {
 
-            if (!whitelist.contains(playerName)) {
-                event.disallow(PlayerLoginEvent.Result.KICK_OTHER,
-                        "Server is currently under maintenance.\nYou are not whitelisted.");
+            stmt.setString(1, uuid.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String perm = rs.getString("permission");
+                    PermissionManager.addPermission(player, perm);
+                }
             }
+
+        } catch (SQLException e) {
+            getLogger().warning("Could not load permissions for " + player.getName() + ": " + e.getMessage());
         }
+        database.createPlayerIFNotExist(player);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        PermissionManager.cleanup(event.getPlayer());
     }
 }
